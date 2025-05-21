@@ -58,9 +58,8 @@ if uploaded_files:
                 pdf.image(tmpfile.name, x=10, y=30, w=80)
 
         # Convert PDF to bytes
-        pdf_output = io.BytesIO()
-        pdf.output(pdf_output)
-        pdf_output.seek(0)
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        pdf_output = io.BytesIO(pdf_bytes)
 
         st.download_button(
             label="📄 Download PDF Report",
