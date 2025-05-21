@@ -4,4 +4,4 @@ numpy
 joblib
 fpdf
 Pillow
-matplotlib.pyplot
+matplotlib
