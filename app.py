@@ -26,7 +26,7 @@ def preprocess_image(img):
     return resized.flatten().reshape(1, -1)
 
 # Streamlit UI
-st.title("🧠 Image Classification with Pretrained Model")
+st.title("🤖 CrackGuard – Your first line of defence against failure")
 st.text("created by TanCW")
 uploaded_files = st.file_uploader("Upload multiple images...", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
