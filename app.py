@@ -73,7 +73,6 @@ if uploaded_files:
     pie_path = "pie_chart.png"
     fig.savefig(pie_path)
 
-    st.audio("complete_notification.mp3")
     # PDF Generation
     if st.button("Generate PDF Report"):
         with st.spinner("Generating PDF report..."):
