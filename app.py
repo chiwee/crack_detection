@@ -27,8 +27,9 @@ def preprocess_image(img):
 
 # Streamlit UI
 st.title("🧠 Image Classification with Pretrained Model")
-uploaded_files = st.file_uploader("Upload multiple images...", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 st.text("created by TanCW")
+uploaded_files = st.file_uploader("Upload multiple images...", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
 
 results = []
 
