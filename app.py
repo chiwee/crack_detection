@@ -38,7 +38,7 @@ if uploaded_files:
     with st.spinner("Processing images..."):
         for uploaded_file in uploaded_files:
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption=uploaded_file.name, use_column_width=True)
+            st.image(image, caption=uploaded_file.name, use_container_width =True)
 
             features = preprocess_image(image)
             try:
