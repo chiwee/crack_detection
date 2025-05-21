@@ -2,12 +2,15 @@ import streamlit as st
 import cv2
 import numpy as np
 import joblib
+from fpdf import FPDF
+import tempfile
+from PIL import Image
+import io
 
 # Load the trained model once
 @st.cache_resource
 def load_model():
-    model = joblib.load("trained_model_LogisticRegression.pkl")  # adjust filename/model if needed
-    return model
+    return joblib.load("trained_model_LogisticRegression.pkl")
 
 model = load_model()
 
@@ -19,20 +22,47 @@ def preprocess_image(img):
     flattened = resized.flatten()
     return flattened.reshape(1, -1)
 
-st.title("Image Classification with Pretrained Model")
+st.title("Batch Image Classification & PDF Report Generator")
 
-uploaded_file = st.file_uploader("Upload an image...", type=["png", "jpg", "jpeg"])
+uploaded_files = st.file_uploader("Upload multiple images...", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    # Read uploaded image
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+results = []
 
-    st.image(img, channels="BGR", caption="Uploaded Image")
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-    # Preprocess and predict
-    features = preprocess_image(img)
-    prediction = model.predict(features)[0]
-    label = "Positive" if prediction == 1 else "Negative"
+        features = preprocess_image(img)
+        prediction = model.predict(features)[0]
+        label = "Positive" if prediction == 1 else "Negative"
 
-    st.markdown(f"### Prediction: **{label}**")
+        st.image(img, channels="BGR", width=150, caption=f"{uploaded_file.name} - Prediction: {label}")
+        
+        # Save PIL image for PDF
+        pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        results.append((pil_img, uploaded_file.name, label))
+
+    # Generate PDF
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    for img, name, label in results:
+        pdf.add_page()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmpfile:
+            img.save(tmpfile.name, "JPEG")
+            pdf.set_font("Arial", size=12)
+            pdf.cell(200, 10, f"Image: {name}", ln=True)
+            pdf.cell(200, 10, f"Prediction: {label}", ln=True)
+            pdf.image(tmpfile.name, x=10, y=30, w=80)
+    
+    # Save PDF to BytesIO
+    pdf_output = io.BytesIO()
+    pdf.output(pdf_output)
+    pdf_output.seek(0)
+
+    st.download_button(
+        label="📄 Download PDF Report",
+        data=pdf_output,
+        file_name="classification_report.pdf",
+        mime="application/pdf"
+    )
