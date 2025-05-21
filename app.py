@@ -18,7 +18,7 @@ model = load_model()
 
 # Preprocessing function
 def preprocess_image(img):
-    gray = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)  # RGB instead of BGR for PIL
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges = cv2.Canny(blurred, 50, 150)
     resized = cv2.resize(edges, (64, 64))
@@ -48,28 +48,34 @@ if uploaded_files:
     labels_list = [label for _, _, label in results]
     positives = labels_list.count("Positive")
     negatives = labels_list.count("Negative")
-    
+
     fig, ax = plt.subplots()
-    ax.pie([positives, negatives], labels=["Positive", "Negative"], autopct='%1.1f%%', colors=["green", "red"])
+    ax.pie(
+        [positives, negatives],
+        labels=["Positive", "Negative"],
+        autopct='%1.1f%%',
+        colors=["green", "red"]
+    )
     ax.axis("equal")
     st.pyplot(fig)
 
-    # Save pie chart as image
-    pie_path = "pie_chart.png"
-    fig.savefig(pie_path)
+    # Save pie chart as temporary image
+    pie_chart_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    fig.savefig(pie_chart_file.name)
+    pie_chart_file.close()
 
     # PDF Generation
     if st.button("Generate PDF Report"):
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        # Add Pie Chart to PDF
+        # Add Pie Chart
         pdf.add_page()
         pdf.set_font("Arial", size=14)
         pdf.cell(200, 10, "Overall Prediction Summary", ln=True)
-        pdf.image(pie_path, x=10, y=30, w=180)
+        pdf.image(pie_chart_file.name, x=10, y=30, w=180)
 
-        # Add each image & prediction
+        # Add image thumbnails and labels
         for img, name, label in results:
             pdf.add_page()
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmpfile:
@@ -79,8 +85,8 @@ if uploaded_files:
                 pdf.cell(200, 10, f"Prediction: {label}", ln=True)
                 pdf.image(tmpfile.name, x=10, y=30, w=80)
 
-        # Convert to BytesIO
-        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        # Create PDF in memory
+        pdf_bytes = pdf.output(dest="S").encode("latin1")
         pdf_output = io.BytesIO(pdf_bytes)
 
         # Download button
@@ -90,3 +96,6 @@ if uploaded_files:
             file_name="prediction_report.pdf",
             mime="application/pdf"
         )
+
+        # Clean up pie chart file
+        os.remove(pie_chart_file.name)
