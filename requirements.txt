@@ -5,4 +5,4 @@ joblib
 fpdf
 Pillow
 matplotlib
-sklearn
+scikit-learn
